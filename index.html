@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AuraChat</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous"/>
+</head>
+<body>
+
+  <!-- SPLASH SCREEN -->
+  <div id="splashScreen" class="splash">
+    <div class="splash-inner">
+      <div class="splash-logo">
+        <div class="logo-ring"></div>
+        <div class="logo-ring ring2"></div>
+        <div class="logo-icon"><i class="fas fa-bolt"></i></div>
+      </div>
+      <h1 class="splash-title">AuraChat</h1>
+      <p class="splash-sub">Premium Messaging Experience</p>
+    </div>
+  </div>
+
+  <div class="app-container">
+
+    <!-- ===== LOGIN SCREEN ===== -->
+    <div class="login-screen" id="loginScreen">
+      <div class="login-bg">
+        <div class="orb orb1"></div>
+        <div class="orb orb2"></div>
+        <div class="orb orb3"></div>
+      </div>
+      <div class="login-container">
+        <div class="login-brand">
+          <div class="brand-icon"><i class="fas fa-bolt"></i></div>
+          <h1>AuraChat</h1>
+          <p>Sign in to continue</p>
+        </div>
+
+        <div class="role-tabs">
+          <button class="role-tab active" data-role="user" onclick="switchRole('user')">
+            <i class="fas fa-user"></i> User
+          </button>
+          <button class="role-tab" data-role="admin" onclick="switchRole('admin')">
+            <i class="fas fa-shield-alt"></i> Admin
+          </button>
+        </div>
+
+        <div id="adminFields" style="display:none;">
+          <div class="input-group">
+            <i class="fas fa-lock"></i>
+            <input type="password" id="adminPassword" placeholder="Admin Password" />
+          </div>
+        </div>
+
+        <div class="profile-upload-area">
+          <label for="profilePic" class="avatar-upload">
+            <img src="https://api.dicebear.com/7.x/thumbs/svg?seed=default" id="profilePreview"/>
+            <div class="upload-overlay"><i class="fas fa-camera"></i></div>
+          </label>
+          <input type="file" id="profilePic" accept="image/*" hidden />
+          <p class="upload-hint">Tap to set photo</p>
+        </div>
+
+        <div class="input-group">
+          <i class="fas fa-user"></i>
+          <input type="text" id="displayName" placeholder="Your name" />
+        </div>
+
+        <button id="submitUser" class="btn-primary">
+          <span>Get Started</span>
+          <i class="fas fa-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== CHAT INTERFACE ===== -->
+    <div class="chat-interface" id="chatInterface" style="display:none;">
+
+      <!-- SIDEBAR -->
+      <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <div class="my-profile" id="myProfileBtn">
+            <div class="avatar-wrap">
+              <img id="currentUserAvatar" src="https://api.dicebear.com/7.x/thumbs/svg?seed=default"/>
+              <span class="online-badge"></span>
+            </div>
+            <div class="my-info">
+              <span id="currentUserName">You</span>
+              <small id="myStatusText">Available</small>
+            </div>
+          </div>
+          <div class="sidebar-actions">
+            <button class="icon-btn" id="newChatBtn" title="New Chat"><i class="fas fa-edit"></i></button>
+            <button class="icon-btn" id="toggleDark" title="Dark Mode"><i class="fas fa-moon"></i></button>
+            <div class="dropdown-wrap">
+              <button class="icon-btn" id="settingsBtn"><i class="fas fa-ellipsis-v"></i></button>
+              <div class="dropdown-menu" id="settingsMenu">
+                <button onclick="openMyProfile()"><i class="fas fa-user-circle"></i> My Profile</button>
+                <button id="editNameTrigger"><i class="fas fa-pen"></i> Edit Name</button>
+                <button onclick="setMyStatus()"><i class="fas fa-circle"></i> Set Status</button>
+                <hr/>
+                <button onclick="logout()" class="danger-item"><i class="fas fa-sign-out-alt"></i> Logout</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Edit Name Inline -->
+        <div id="editNameBox" class="edit-name-box">
+          <input type="text" id="newNameInput" placeholder="New username" />
+          <button id="saveNameBtn" class="btn-small">Save</button>
+        </div>
+
+        <div class="search-bar">
+          <i class="fas fa-search"></i>
+          <input type="text" id="contactSearch" placeholder="Search contacts..." oninput="filterContacts(this.value)"/>
+        </div>
+
+        <!-- Tabs -->
+        <div class="sidebar-tabs">
+          <button class="stab active" onclick="switchTab('all', this)">All</button>
+          <button class="stab" onclick="switchTab('online', this)">Online</button>
+          <button class="stab" onclick="switchTab('unread', this)">Unread</button>
+        </div>
+
+        <div class="contacts-list" id="users"></div>
+
+        <!-- Bottom nav -->
+        <div class="sidebar-bottom">
+          <button class="bottom-nav active" title="Chats"><i class="fas fa-comment-dots"></i></button>
+          <button class="bottom-nav" title="Contacts" onclick="showToast('Contacts coming soon!')"><i class="fas fa-users"></i></button>
+          <button class="bottom-nav" title="Settings" onclick="openSettings()"><i class="fas fa-cog"></i></button>
+        </div>
+      </div>
+
+      <!-- MAIN CHAT -->
+      <div class="main-chat" id="mainChat">
+
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState">
+          <div class="empty-icon"><i class="fas fa-bolt"></i></div>
+          <h2>AuraChat</h2>
+          <p>Select a contact to start chatting</p>
+        </div>
+
+        <!-- Chat Header -->
+        <div id="chatHeader" class="chat-header" style="display:none;">
+          <button id="backToContactsBtn" class="back-btn">
+            <i class="fas fa-arrow-left"></i>
+          </button>
+          <div class="chat-partner" id="chatPartnerInfo">
+            <div class="avatar-wrap">
+              <img id="chatPartnerAvatar" src=""/>
+              <span class="online-badge" id="partnerOnlineBadge" style="display:none;"></span>
+            </div>
+            <div class="partner-info">
+              <h3 id="chatPartnerName">—</h3>
+              <p class="status-text" id="partnerStatus">Offline</p>
+            </div>
+          </div>
+          <div class="chat-header-actions">
+            <button class="icon-btn" onclick="openSearch()" title="Search"><i class="fas fa-search"></i></button>
+            <button class="icon-btn" onclick="toggleMute()" id="muteBtn" title="Mute"><i class="fas fa-bell"></i></button>
+            <button class="icon-btn" onclick="clearChat()" title="Clear Chat"><i class="fas fa-broom"></i></button>
+            <div class="dropdown-wrap">
+              <button class="icon-btn"><i class="fas fa-ellipsis-v"></i></button>
+              <div class="dropdown-menu">
+                <button onclick="viewProfile()"><i class="fas fa-user"></i> View Profile</button>
+                <button onclick="copyLastMessage()"><i class="fas fa-copy"></i> Copy Last Msg</button>
+                <button onclick="exportChat()"><i class="fas fa-download"></i> Export Chat</button>
+                <hr/>
+                <button onclick="clearChat()" class="danger-item"><i class="fas fa-trash"></i> Clear Chat</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div id="searchBox" class="msg-search-box" style="display:none;">
+          <i class="fas fa-search"></i>
+          <input type="text" id="searchInput" placeholder="Search messages..."/>
+          <button onclick="searchMessage('prev')" title="Previous"><i class="fas fa-chevron-up"></i></button>
+          <button onclick="searchMessage('next')" title="Next"><i class="fas fa-chevron-down"></i></button>
+          <span id="searchCount"></span>
+          <button onclick="closeSearch()"><i class="fas fa-times"></i></button>
+        </div>
+
+        <!-- Messages Area -->
+        <div id="messages" class="message-area"></div>
+
+        <!-- Reply Preview -->
+        <div id="replyPreview" class="reply-preview" style="display:none;">
+          <div class="reply-content">
+            <span class="reply-label">Replying to</span>
+            <p id="replyText"></p>
+          </div>
+          <button onclick="cancelReply()"><i class="fas fa-times"></i></button>
+        </div>
+
+        <!-- Composer -->
+        <div class="message-composer" id="composer" style="display:none;">
+          <button class="icon-btn emoji-btn" onclick="toggleEmojiPicker()" title="Emoji">
+            <i class="far fa-smile"></i>
+          </button>
+          <div class="emoji-picker" id="emojiPicker">
+            <div class="emoji-grid" id="emojiGrid"></div>
+          </div>
+          <input type="text" id="messageInput" placeholder="Type a message..." />
+          <button class="icon-btn" onclick="triggerImageUpload()" title="Image">
+            <i class="fas fa-image"></i>
+          </button>
+          <input type="file" id="imageUpload" accept="image/*" hidden onchange="sendImageMessage(this)"/>
+          <button id="sendMessage" class="send-btn">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
+
+        <!-- Admin Controls -->
+        <div class="admin-controls" id="adminControls" style="display:none;">
+          <button onclick="adminDeleteUser()"><i class="fas fa-user-slash"></i> Delete User</button>
+          <button onclick="adminUnsend()"><i class="fas fa-ban"></i> Unsend Last</button>
+          <button onclick="adminBroadcast()"><i class="fas fa-bullhorn"></i> Broadcast</button>
+        </div>
+
+      </div><!-- /main-chat -->
+    </div><!-- /chat-interface -->
+  </div><!-- /app-container -->
+
+  <!-- ===== MODALS ===== -->
+
+  <!-- Profile Modal -->
+  <div class="modal-overlay" id="profileModal" style="display:none;">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeModal('profileModal')"><i class="fas fa-times"></i></button>
+      <div class="profile-modal-content">
+        <div class="profile-big-avatar">
+          <img id="modalAvatar" src=""/>
+        </div>
+        <h2 id="modalName"></h2>
+        <p id="modalRole" class="modal-role"></p>
+        <p id="modalStatus" class="modal-status"></p>
+        <p id="modalJoined" class="modal-joined"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status Modal -->
+  <div class="modal-overlay" id="statusModal" style="display:none;">
+    <div class="modal-box small">
+      <button class="modal-close" onclick="closeModal('statusModal')"><i class="fas fa-times"></i></button>
+      <h3>Set Your Status</h3>
+      <div class="status-options">
+        <button onclick="saveStatus('🟢 Available')">🟢 Available</button>
+        <button onclick="saveStatus('🌙 Away')">🌙 Away</button>
+        <button onclick="saveStatus('🔴 Busy')">🔴 Busy</button>
+        <button onclick="saveStatus('📵 Do Not Disturb')">📵 Do Not Disturb</button>
+        <button onclick="saveStatus('👻 Invisible')">👻 Invisible</button>
+      </div>
+      <input type="text" id="customStatus" placeholder="Custom status..." style="margin-top:10px; width:100%;"/>
+      <button class="btn-small" style="margin-top:8px;" onclick="saveCustomStatus()">Set Custom</button>
+    </div>
+  </div>
+
+  <!-- Broadcast Modal -->
+  <div class="modal-overlay" id="broadcastModal" style="display:none;">
+    <div class="modal-box small">
+      <button class="modal-close" onclick="closeModal('broadcastModal')"><i class="fas fa-times"></i></button>
+      <h3><i class="fas fa-bullhorn"></i> Admin Broadcast</h3>
+      <textarea id="broadcastText" placeholder="Message to all users..." rows="4"></textarea>
+      <button class="btn-primary" onclick="sendBroadcast()" style="margin-top:10px;">
+        <span>Send to All</span><i class="fas fa-paper-plane"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
