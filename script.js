@@ -143,6 +143,40 @@ function loadUsers() {
       if (!isAdmin && u.role !== "admin") return;
       allUsers.push(u);
     });
+
+    // FIX: Login pe har user ke saath unread messages count karo Firebase se
+    const loginTime = Date.now();
+    allUsers.forEach(u => {
+      const chatId = getChatId2(currentUser.displayName, u.displayName);
+
+      // Existing unread on login
+      msgsRef.child(chatId).orderByChild("read").equalTo(false).once("value", unreadSnap => {
+        let count = 0;
+        unreadSnap.forEach(m => {
+          if (m.val().sender !== currentUser.displayName) count++;
+        });
+        if (count > 0) {
+          unreadCounts[u.displayName] = count;
+          renderContacts();
+        }
+      });
+
+      // Real-time new messages
+      msgsRef.child(chatId)
+        .orderByChild("timestamp")
+        .startAt(loginTime)
+        .on("child_added", msgSnap => {
+          const msg = msgSnap.val();
+          if (!msg || msg.sender === currentUser.displayName) return;
+          if (isMuted) return;
+          if (!currentChatUser || currentChatUser.displayName !== msg.sender) {
+            unreadCounts[msg.sender] = (unreadCounts[msg.sender] || 0) + 1;
+            renderContacts();
+            showToast(`💬 ${msg.sender}: ${(msg.text || "📷 Photo").slice(0, 35)}`);
+          }
+        });
+    });
+
     renderContacts();
   });
 }
@@ -294,11 +328,12 @@ function loadMessages() {
   const chatId = getChatId(currentUser, currentChatUser);
   activeListeners.chatId = chatId;
 
-  const handler = snap => {
-    const container = document.getElementById("messages");
-    container.innerHTML = "";
-    let lastDate = "";
+  const container = document.getElementById("messages");
+  container.innerHTML = "";
 
+  // FIX: once() se pehle poori history load karo — page refresh pe bhi sab aayega
+  msgsRef.child(chatId).once("value", snap => {
+    let lastDate = "";
     snap.forEach(child => {
       const msg = { ...child.val(), id: child.key };
 
@@ -312,7 +347,7 @@ function loadMessages() {
         container.appendChild(div);
       }
 
-      // Unread tracking
+      // Mark as read
       if (msg.sender !== currentUser.displayName && !msg.read) {
         msgsRef.child(chatId).child(child.key).update({ read: true });
       }
@@ -321,10 +356,40 @@ function loadMessages() {
     });
 
     container.scrollTop = container.scrollHeight;
-  };
 
-  activeListeners.messages = handler;
-  msgsRef.child(chatId).on("value", handler);
+    // FIX: history load hone ke BAAD child_added lagao — sirf naye messages sunne ke liye
+    // startAt: ab ke baad aane wale messages, purane nahi
+    const lastTs = Date.now();
+    const newMsgHandler = msgsRef.child(chatId)
+      .orderByChild("timestamp")
+      .startAt(lastTs)
+      .on("child_added", child => {
+        const msg = { ...child.val(), id: child.key };
+
+        // Duplicate check — agar already render ho chuka hai toh skip
+        if (document.getElementById(`bubble-${msg.id}`)) return;
+
+        // Date divider for new message if date changed
+        const msgDate = new Date(msg.timestamp).toDateString();
+        const lastDivider = container.querySelector(".date-divider:last-of-type span");
+        if (!lastDivider || lastDivider.textContent !== formatDate(msg.timestamp)) {
+          const div = document.createElement("div");
+          div.className = "date-divider";
+          div.innerHTML = `<span>${formatDate(msg.timestamp)}</span>`;
+          container.appendChild(div);
+        }
+
+        if (msg.sender !== currentUser.displayName && !msg.read) {
+          msgsRef.child(chatId).child(child.key).update({ read: true });
+        }
+
+        renderMessage(msg, chatId);
+        container.scrollTop = container.scrollHeight;
+        renderContacts(); // last message preview update
+      });
+
+    activeListeners.messages = newMsgHandler;
+  });
 }
 
 // ===== RENDER MESSAGE =====
@@ -391,7 +456,8 @@ function renderMessage(msg, chatId) {
 
   container.appendChild(wrap);
 
-  // Load reactions live
+  // FIX: once() use karo reactions ke liye — memory leak nahi hoga bar bar render pe
+  // Aur real-time ke liye alag ek listener per chatId lagao (loadMessages mein)
   reactRef.child(chatId).child(msg.id).on("value", snap => {
     reactDiv.innerHTML = "";
     const counts = {};
@@ -746,19 +812,40 @@ function sendBroadcast() {
 // ===== BROADCAST LISTENER (for users) =====
 function listenBroadcasts() {
   if (isAdmin) return;
+  const loginTime = Date.now(); // FIX: sirf login ke BAAD aane wale messages pe notify karo
+
   usersRef.get().then(snap => {
     snap.forEach(child => {
       const u = child.val();
       if (u.role !== "admin") return;
       const chatId = getChatId2(currentUser.displayName, u.displayName);
-      msgsRef.child(chatId).on("child_added", snap => {
-        const msg = snap.val();
-        if (msg.sender !== currentUser.displayName && !isMuted) {
+
+      // FIX: startAt(loginTime) — purani messages ignore, sirf naye sunno
+      msgsRef.child(chatId)
+        .orderByChild("timestamp")
+        .startAt(loginTime)
+        .on("child_added", msgSnap => {
+          const msg = msgSnap.val();
+          if (!msg || msg.sender === currentUser.displayName) return;
+          if (isMuted) return;
+
+          // Sirf tab notify karo jab us chat mein nahi ho
           if (!currentChatUser || currentChatUser.displayName !== msg.sender) {
             unreadCounts[msg.sender] = (unreadCounts[msg.sender] || 0) + 1;
             renderContacts();
-            showToast(`💬 ${msg.sender}: ${msg.text?.slice(0, 30) || "Photo"}`);
+            showToast(`💬 ${msg.sender}: ${(msg.text || "📷 Photo").slice(0, 35)}`);
           }
+        });
+
+      // FIX: Login pe unread count correctly load karo Firebase se (read: false messages count)
+      msgsRef.child(chatId).orderByChild("read").equalTo(false).once("value", unreadSnap => {
+        let count = 0;
+        unreadSnap.forEach(m => {
+          if (m.val().sender !== currentUser.displayName) count++;
+        });
+        if (count > 0) {
+          unreadCounts[u.displayName] = count;
+          renderContacts();
         }
       });
     });
