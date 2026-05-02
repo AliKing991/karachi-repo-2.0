@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <!-- MOBILE KEYBOARD FIX: interactive-widget ensures keyboard doesn't break layout -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content"/>
   <title>AuraChat</title>
   <link rel="stylesheet" href="style.css"/>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,7 +22,7 @@
       <div class="logo-icon"><i class="fas fa-bolt"></i></div>
     </div>
     <h1 class="splash-title">AuraChat</h1>
-    <p class="splash-sub">Premium Messaging Experience</p>
+    <p class="splash-sub">Anonymous. Premium. Secure.</p>
     <div class="splash-loader"><div class="splash-bar"></div></div>
   </div>
 </div>
@@ -49,7 +50,7 @@
 
 <div class="app-container">
 
-  <!-- LOGIN -->
+  <!-- ===== LOGIN ===== -->
   <div class="login-screen" id="loginScreen">
     <div class="login-bg">
       <div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div>
@@ -58,29 +59,49 @@
       <div class="login-brand">
         <div class="brand-icon"><i class="fas fa-bolt"></i></div>
         <h1>AuraChat</h1>
-        <p>Your premium space to connect</p>
+        <p>Anonymous messaging, redefined</p>
       </div>
+
+      <!-- Role Tabs -->
       <div class="role-tabs">
-        <button class="role-tab active" data-role="user" onclick="switchRole('user')"><i class="fas fa-user"></i> User</button>
+        <button class="role-tab active" data-role="user" onclick="switchRole('user')"><i class="fas fa-user-secret"></i> User</button>
         <button class="role-tab" data-role="admin" onclick="switchRole('admin')"><i class="fas fa-shield-alt"></i> Admin</button>
       </div>
+
+      <!-- Admin password -->
       <div id="adminFields" style="display:none;">
         <div class="input-group"><i class="fas fa-lock"></i><input type="password" id="adminPassword" placeholder="Admin Password"/></div>
       </div>
+
+      <!-- Profile photo -->
       <div class="profile-upload-area">
         <label for="profilePic" class="avatar-upload">
           <img src="https://api.dicebear.com/7.x/thumbs/svg?seed=default" id="profilePreview"/>
           <div class="upload-overlay"><i class="fas fa-camera"></i></div>
         </label>
         <input type="file" id="profilePic" accept="image/*" hidden/>
-        <p class="upload-hint">Tap to set photo</p>
+        <p class="upload-hint">Tap to set photo (optional)</p>
       </div>
-      <div class="input-group"><i class="fas fa-user"></i><input type="text" id="displayName" placeholder="Your name"/></div>
-      <button id="submitUser" class="btn-primary"><span>Get Started</span><i class="fas fa-arrow-right"></i></button>
+
+      <!-- Private login name (never shown to others) -->
+      <div class="input-group">
+        <i class="fas fa-user-secret"></i>
+        <input type="text" id="displayName" placeholder="Private login name (only you see this)"/>
+      </div>
+
+      <!-- Optional display name shown to others -->
+      <div class="input-group">
+        <i class="fas fa-id-badge"></i>
+        <input type="text" id="publicDisplayName" placeholder="Display name (optional, shown to others)"/>
+      </div>
+
+      <p class="login-hint">💡 If no display name, you'll get a random anonymous ID</p>
+
+      <button id="submitUser" class="btn-primary"><span>Enter AuraChat</span><i class="fas fa-arrow-right"></i></button>
     </div>
   </div>
 
-  <!-- CHAT INTERFACE -->
+  <!-- ===== CHAT INTERFACE ===== -->
   <div class="chat-interface" id="chatInterface" style="display:none;">
 
     <!-- SIDEBAR -->
@@ -93,17 +114,19 @@
           </div>
           <div class="my-info">
             <span id="currentUserName">You</span>
-            <small id="myStatusText">🟢 Available</small>
+            <small id="myUniqueId" class="unique-id-text"></small>
           </div>
         </div>
         <div class="sidebar-actions">
+          <button class="icon-btn" onclick="openCouponSearch()" title="Find by Coupon Code"><i class="fas fa-ticket-alt"></i></button>
           <button class="icon-btn" onclick="openStoryCreator()" title="Add Story"><i class="fas fa-circle-plus"></i></button>
           <button class="icon-btn" id="toggleDark" title="Theme"><i class="fas fa-moon"></i></button>
           <div class="dropdown-wrap">
             <button class="icon-btn" id="settingsBtn"><i class="fas fa-ellipsis-v"></i></button>
             <div class="dropdown-menu" id="settingsMenu">
               <button onclick="openMyProfile()"><i class="fas fa-user-circle"></i> My Profile</button>
-              <button id="editNameTrigger"><i class="fas fa-pen"></i> Edit Name</button>
+              <button onclick="showMyCoupon()"><i class="fas fa-ticket-alt"></i> My Coupon Code</button>
+              <button id="editNameTrigger"><i class="fas fa-pen"></i> Edit Display Name</button>
               <button onclick="setMyStatus()"><i class="fas fa-circle"></i> Set Status</button>
               <button onclick="openWallpaperPicker()"><i class="fas fa-image"></i> Wallpaper</button>
               <button onclick="openChatLockSetup()"><i class="fas fa-lock"></i> Chat Lock (PIN)</button>
@@ -116,8 +139,9 @@
         </div>
       </div>
 
+      <!-- Edit Display Name inline -->
       <div id="editNameBox" class="edit-name-box">
-        <input type="text" id="newNameInput" placeholder="New username"/>
+        <input type="text" id="newNameInput" placeholder="New display name (shown to others)"/>
         <button id="saveNameBtn" class="btn-small">Save</button>
       </div>
 
@@ -125,28 +149,29 @@
       <div class="stories-bar">
         <div class="story-add-btn" onclick="openStoryCreator()">
           <div class="story-ring add-ring"><i class="fas fa-plus"></i></div>
-          <span>Add Story</span>
+          <span>Story</span>
         </div>
         <div id="storiesList" class="stories-scroll"></div>
       </div>
 
       <div class="search-bar">
         <i class="fas fa-search"></i>
-        <input type="text" id="contactSearch" placeholder="Search contacts..." oninput="filterContacts(this.value)"/>
+        <input type="text" id="contactSearch" placeholder="Search chats..." oninput="filterContacts(this.value)"/>
       </div>
 
+      <!-- Tabs: Chats | Groups -->
       <div class="sidebar-tabs">
-        <button class="stab active" onclick="switchTab('all',this)">All</button>
-        <button class="stab" onclick="switchTab('online',this)">Online</button>
-        <button class="stab" onclick="switchTab('unread',this)">Unread</button>
+        <button class="stab active" onclick="switchTab('chats',this)">💬 Chats</button>
+        <button class="stab" onclick="switchTab('groups',this)">👥 Groups</button>
+        <button class="stab" onclick="switchTab('online',this)">🟢 Online</button>
       </div>
 
       <div class="contacts-list" id="users"></div>
 
       <div class="sidebar-bottom">
         <button class="bottom-nav active" title="Chats"><i class="fas fa-comment-dots"></i></button>
+        <button class="bottom-nav" title="Find by Coupon" onclick="openCouponSearch()"><i class="fas fa-ticket-alt"></i></button>
         <button class="bottom-nav" title="Stories" onclick="openStoriesView()"><i class="fas fa-circle-play"></i></button>
-        <button class="bottom-nav" title="Settings" onclick="openSettingsPanel()"><i class="fas fa-cog"></i></button>
         <button class="bottom-nav admin-only" id="dashboardNavBtn" title="Admin Dashboard" onclick="openAdminDashboard()" style="display:none;"><i class="fas fa-chart-pie"></i></button>
       </div>
     </div>
@@ -156,7 +181,8 @@
       <div class="empty-state" id="emptyState">
         <div class="empty-icon"><i class="fas fa-bolt"></i></div>
         <h2>AuraChat</h2>
-        <p>Select a contact to start chatting</p>
+        <p>Select a chat or use a coupon code to connect</p>
+        <button class="btn-small" onclick="openCouponSearch()" style="margin-top:12px;"><i class="fas fa-ticket-alt"></i> Use Coupon Code</button>
       </div>
 
       <!-- Chat Header -->
@@ -202,7 +228,7 @@
         <button onclick="closeSearch()"><i class="fas fa-times"></i></button>
       </div>
 
-      <!-- Messages Area -->
+      <!-- Messages -->
       <div id="messages" class="message-area"></div>
 
       <!-- Reply Preview -->
@@ -223,7 +249,8 @@
 
       <!-- Self-destruct indicator -->
       <div id="destructIndicator" class="destruct-indicator" style="display:none;">
-        <i class="fas fa-clock"></i> <span id="destructLabel">Self-destruct: Off</span>
+        <i class="fas fa-clock"></i>
+        <span id="destructLabel">Self-destruct: Off</span>
         <button onclick="openDestructTimer()">Change</button>
       </div>
 
@@ -231,17 +258,20 @@
       <div class="message-composer" id="composer" style="display:none;">
         <button class="icon-btn emoji-btn" onclick="toggleEmojiPicker()" title="Emoji"><i class="far fa-smile"></i></button>
         <div class="emoji-picker" id="emojiPicker"><div class="emoji-grid" id="emojiGrid"></div></div>
-        <input type="text" id="messageInput" placeholder="Type a message..."/>
+        <!-- MOBILE KEYBOARD FIX: inputmode, autocomplete off, enterkeyhint -->
+        <input type="text" id="messageInput" placeholder="Type a message..."
+          inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="sentences"
+          enterkeyhint="send"/>
         <button class="icon-btn" onclick="triggerImageUpload()" title="Image"><i class="fas fa-image"></i></button>
         <input type="file" id="imageUpload" accept="image/*" hidden onchange="sendImageMessage(this)"/>
         <button class="icon-btn voice-btn" id="voiceRecordBtn"
           onmousedown="startVoiceRecord()" onmouseup="stopVoiceRecord()"
           ontouchstart="startVoiceRecord(event)" ontouchend="stopVoiceRecord()"
-          title="Hold to record voice"><i class="fas fa-microphone"></i></button>
+          title="Hold to record"><i class="fas fa-microphone"></i></button>
         <button id="sendMessage" class="send-btn"><i class="fas fa-paper-plane"></i></button>
       </div>
 
-      <!-- Voice recording indicator -->
+      <!-- Voice recording bar -->
       <div id="voiceRecordingBar" class="voice-recording-bar" style="display:none;">
         <div class="rec-pulse"></div>
         <span>Recording... <span id="recTimer">0s</span></span>
@@ -253,6 +283,7 @@
         <button onclick="adminDeleteUser()"><i class="fas fa-user-slash"></i> Delete User</button>
         <button onclick="adminUnsend()"><i class="fas fa-ban"></i> Unsend Last</button>
         <button onclick="adminBroadcast()"><i class="fas fa-bullhorn"></i> Broadcast</button>
+        <button onclick="openCreateGroup()"><i class="fas fa-users"></i> Create Group</button>
         <button onclick="openAdminDashboard()"><i class="fas fa-chart-pie"></i> Dashboard</button>
       </div>
     </div>
@@ -273,9 +304,9 @@
     <video id="localVideo" autoplay muted playsinline class="local-video" style="display:none;"></video>
     <video id="remoteVideo" autoplay playsinline class="remote-video" style="display:none;"></video>
     <div class="call-controls">
-      <button class="call-btn" id="callMuteBtn" onclick="toggleCallMute()" title="Mute"><i class="fas fa-microphone"></i></button>
-      <button class="call-btn end-btn" onclick="endCall()" title="End Call"><i class="fas fa-phone-slash"></i></button>
-      <button class="call-btn" id="callSpeakerBtn" onclick="toggleSpeaker()" title="Speaker"><i class="fas fa-volume-up"></i></button>
+      <button class="call-btn" id="callMuteBtn" onclick="toggleCallMute()"><i class="fas fa-microphone"></i></button>
+      <button class="call-btn end-btn" onclick="endCall()"><i class="fas fa-phone-slash"></i></button>
+      <button class="call-btn" id="callSpeakerBtn" onclick="toggleSpeaker()"><i class="fas fa-volume-up"></i></button>
     </div>
   </div>
 </div>
@@ -295,6 +326,35 @@
 
 <!-- ===== MODALS ===== -->
 
+<!-- Coupon Code Modal -->
+<div class="modal-overlay" id="couponModal" style="display:none;">
+  <div class="modal-box small">
+    <button class="modal-close" onclick="closeModal('couponModal')"><i class="fas fa-times"></i></button>
+    <h3><i class="fas fa-ticket-alt"></i> Connect via Coupon Code</h3>
+    <p style="color:var(--text2);font-size:13px;margin-bottom:14px;">Enter someone's coupon code to start chatting anonymously</p>
+    <div class="input-group" style="margin:0;">
+      <i class="fas fa-hashtag"></i>
+      <!-- MOBILE KEYBOARD FIX for modal input -->
+      <input type="text" id="couponInput" placeholder="e.g. AURA-X7K2-P9Q1"
+        inputmode="text" autocomplete="off" autocapitalize="characters"
+        style="text-transform:uppercase; letter-spacing:2px; font-family:var(--font-head); font-size:16px;"/>
+    </div>
+    <button class="btn-primary" onclick="findByCoupon()" style="margin-top:12px;"><span>Connect</span><i class="fas fa-arrow-right"></i></button>
+  </div>
+</div>
+
+<!-- My Coupon Code Modal -->
+<div class="modal-overlay" id="myCouponModal" style="display:none;">
+  <div class="modal-box small" style="text-align:center;">
+    <button class="modal-close" onclick="closeModal('myCouponModal')"><i class="fas fa-times"></i></button>
+    <h3><i class="fas fa-ticket-alt"></i> Your Coupon Code</h3>
+    <p style="color:var(--text2);font-size:13px;margin-bottom:16px;">Share this code with anyone to let them chat with you</p>
+    <div class="coupon-display" id="myCouponDisplay"></div>
+    <p style="color:var(--text3);font-size:11px;margin-top:8px;">Your real name is never revealed</p>
+    <button class="btn-primary" onclick="copyCoupon()" style="margin-top:12px;"><i class="fas fa-copy"></i><span>Copy Code</span></button>
+  </div>
+</div>
+
 <!-- Profile Modal -->
 <div class="modal-overlay" id="profileModal" style="display:none;">
   <div class="modal-box">
@@ -302,10 +362,11 @@
     <div class="profile-modal-content">
       <div class="profile-big-avatar"><img id="modalAvatar" src=""/></div>
       <h2 id="modalName"></h2>
+      <p id="modalUniqueId" class="unique-id-text" style="margin:4px 0;font-size:13px;"></p>
       <p id="modalRole" class="modal-role"></p>
       <p id="modalStatusTxt" class="modal-status"></p>
       <p id="modalJoined" class="modal-joined"></p>
-      <div id="modalActions" style="display:none; margin-top:14px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+      <div id="modalActions" style="margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
         <button class="btn-small" onclick="startVoiceCall()"><i class="fas fa-phone"></i> Call</button>
         <button class="btn-small" onclick="blockUser()" style="background:#ff5c5c;"><i class="fas fa-ban"></i> Block</button>
       </div>
@@ -325,8 +386,44 @@
       <button onclick="saveStatus('📵 Do Not Disturb')">📵 Do Not Disturb</button>
       <button onclick="saveStatus('👻 Invisible')">👻 Invisible</button>
     </div>
-    <input type="text" id="customStatus" placeholder="Custom status..." style="margin-top:10px;width:100%;"/>
+    <input type="text" id="customStatus" placeholder="Custom status..."
+      inputmode="text" style="margin-top:10px;width:100%;padding:10px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);outline:none;"/>
     <button class="btn-small" style="margin-top:8px;" onclick="saveCustomStatus()">Set Custom</button>
+  </div>
+</div>
+
+<!-- Create Group Modal (Admin only) -->
+<div class="modal-overlay" id="createGroupModal" style="display:none;">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('createGroupModal')"><i class="fas fa-times"></i></button>
+    <h3><i class="fas fa-users"></i> Create Group</h3>
+    <div class="input-group">
+      <i class="fas fa-users"></i>
+      <input type="text" id="groupNameInput" placeholder="Group name" inputmode="text"/>
+    </div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:8px;">Select members to add:</p>
+    <div id="groupMemberPicker" class="group-member-picker"></div>
+    <p style="font-size:11px;color:var(--text3);margin-top:8px;">Members will only see each other inside the group, not in main contacts.</p>
+    <button class="btn-primary" onclick="createGroup()" style="margin-top:14px;"><span>Create Group</span><i class="fas fa-check"></i></button>
+  </div>
+</div>
+
+<!-- Group Info Modal -->
+<div class="modal-overlay" id="groupInfoModal" style="display:none;">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('groupInfoModal')"><i class="fas fa-times"></i></button>
+    <h3 id="groupInfoTitle"><i class="fas fa-users"></i> Group Info</h3>
+    <div class="profile-modal-content">
+      <div class="profile-big-avatar" style="background:var(--surface2);border-radius:50%;width:80px;height:80px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:32px;">👥</div>
+      <h2 id="groupInfoName"></h2>
+      <p id="groupInfoCount" class="modal-status"></p>
+    </div>
+    <h4 style="margin:12px 0 8px;font-size:13px;color:var(--text2);">Members</h4>
+    <div id="groupMemberList" class="group-member-list"></div>
+    <div id="groupAdminActions" style="display:none;margin-top:12px;">
+      <button class="btn-small" onclick="addMemberToGroup()" style="margin-right:8px;"><i class="fas fa-user-plus"></i> Add Member</button>
+      <button class="btn-small" onclick="deleteGroup()" style="background:#ff5c5c;"><i class="fas fa-trash"></i> Delete Group</button>
+    </div>
   </div>
 </div>
 
@@ -336,9 +433,9 @@
     <button class="modal-close" onclick="closeModal('wallpaperModal')"><i class="fas fa-times"></i></button>
     <h3><i class="fas fa-image"></i> Chat Wallpaper</h3>
     <div class="wallpaper-grid" id="wallpaperGrid"></div>
-    <div style="margin-top:14px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-      <label class="btn-small" style="cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
-        <i class="fas fa-upload"></i> Custom Image
+    <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
+      <label class="btn-small" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+        <i class="fas fa-upload"></i> Custom
         <input type="file" id="customWallpaper" accept="image/*" hidden onchange="setCustomWallpaper(this)"/>
       </label>
       <button class="btn-small" onclick="clearWallpaper()" style="background:#444;">🗑 Remove</button>
@@ -351,11 +448,11 @@
   <div class="modal-box small">
     <button class="modal-close" onclick="closeModal('chatLockModal')"><i class="fas fa-times"></i></button>
     <h3><i class="fas fa-lock"></i> Chat Lock PIN</h3>
-    <p style="color:var(--text2); font-size:13px; margin-bottom:12px;">Set a 4-digit PIN to protect your chats</p>
-    <input type="password" id="newPinInput" maxlength="4" placeholder="New 4-digit PIN" class="lock-input"/>
-    <input type="password" id="confirmPinInput" maxlength="4" placeholder="Confirm PIN" class="lock-input" style="margin-top:8px;"/>
+    <!-- MOBILE FIX: inputmode=numeric for PIN -->
+    <input type="password" id="newPinInput" maxlength="4" placeholder="New 4-digit PIN" class="lock-input" inputmode="numeric"/>
+    <input type="password" id="confirmPinInput" maxlength="4" placeholder="Confirm PIN" class="lock-input" style="margin-top:8px;" inputmode="numeric"/>
     <button class="btn-primary" style="margin-top:12px;" onclick="saveChatLock()"><span>Set PIN</span></button>
-    <button onclick="removeChatLock()" style="margin-top:8px; width:100%; background:transparent; border:1px solid #ff5c5c; color:#ff5c5c; padding:8px; border-radius:8px; cursor:pointer; font-family:var(--font-body);">Remove Lock</button>
+    <button onclick="removeChatLock()" style="margin-top:8px;width:100%;background:transparent;border:1px solid #ff5c5c;color:#ff5c5c;padding:8px;border-radius:8px;cursor:pointer;font-family:var(--font-body);">Remove Lock</button>
   </div>
 </div>
 
@@ -364,16 +461,16 @@
   <div class="modal-box small">
     <button class="modal-close" onclick="closeModal('destructModal')"><i class="fas fa-times"></i></button>
     <h3>⏱️ Self-Destruct Timer</h3>
-    <p style="color:var(--text2); font-size:13px; margin-bottom:12px;">Messages auto-delete after sending</p>
+    <p style="color:var(--text2);font-size:13px;margin-bottom:12px;">Messages auto-delete after sending</p>
     <div class="destruct-options">
       <button onclick="setDestructTime(10)">10 sec</button>
       <button onclick="setDestructTime(30)">30 sec</button>
       <button onclick="setDestructTime(60)">1 min</button>
       <button onclick="setDestructTime(300)">5 min</button>
       <button onclick="setDestructTime(3600)">1 hour</button>
-      <button onclick="setDestructTime(0)" style="border-color:#ff5c5c; color:#ff5c5c;">Off</button>
+      <button onclick="setDestructTime(0)" style="border-color:#ff5c5c;color:#ff5c5c;">Off</button>
     </div>
-    <p id="destructStatus" style="font-size:12px; color:var(--primary); margin-top:10px; text-align:center;"></p>
+    <p id="destructStatus" style="font-size:12px;color:var(--primary);margin-top:10px;text-align:center;"></p>
   </div>
 </div>
 
@@ -382,27 +479,27 @@
   <div class="modal-box small">
     <button class="modal-close" onclick="closeModal('editMsgModal')"><i class="fas fa-times"></i></button>
     <h3><i class="fas fa-pen"></i> Edit Message</h3>
-    <input type="text" id="editMsgInput" class="edit-msg-input" placeholder="Edit your message..."/>
+    <input type="text" id="editMsgInput" class="edit-msg-input" inputmode="text" autocomplete="off"/>
     <button class="btn-primary" style="margin-top:10px;" onclick="saveEditedMsg()"><span>Save Changes</span></button>
   </div>
 </div>
 
-<!-- Story Creator Modal -->
+<!-- Story Creator -->
 <div class="modal-overlay" id="storyModal" style="display:none;">
   <div class="modal-box">
     <button class="modal-close" onclick="closeModal('storyModal')"><i class="fas fa-times"></i></button>
     <h3><i class="fas fa-circle-plus"></i> Add Story</h3>
     <div class="story-creator">
-      <textarea id="storyText" placeholder="What's on your mind?..." rows="3"></textarea>
+      <textarea id="storyText" placeholder="What's on your mind?..." rows="3" inputmode="text"></textarea>
       <div class="story-bg-picker">
-        <p style="font-size:12px; color:var(--text2); margin-bottom:6px;">Background</p>
+        <p style="font-size:12px;color:var(--text2);margin-bottom:6px;">Background</p>
         <div id="storyBgOptions" class="story-bg-grid"></div>
       </div>
-      <label class="btn-small" style="cursor:pointer; display:inline-flex; align-items:center; gap:6px; margin-top:8px;">
+      <label class="btn-small" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;margin-top:8px;">
         <i class="fas fa-image"></i> Add Photo
         <input type="file" id="storyImageInput" accept="image/*" hidden onchange="previewStoryImage(this)"/>
       </label>
-      <img id="storyImagePreview" src="" style="display:none; max-width:100%; border-radius:10px; margin-top:8px; max-height:150px; object-fit:cover;"/>
+      <img id="storyImagePreview" src="" style="display:none;max-width:100%;border-radius:10px;margin-top:8px;max-height:150px;object-fit:cover;"/>
       <button class="btn-primary" style="margin-top:14px;" onclick="postStory()"><span>Post Story</span><i class="fas fa-paper-plane"></i></button>
     </div>
   </div>
@@ -426,7 +523,7 @@
   <div class="modal-box small">
     <button class="modal-close" onclick="closeModal('broadcastModal')"><i class="fas fa-times"></i></button>
     <h3><i class="fas fa-bullhorn"></i> Admin Broadcast</h3>
-    <textarea id="broadcastText" placeholder="Message to all users..." rows="4"></textarea>
+    <textarea id="broadcastText" placeholder="Message to all users..." rows="4" inputmode="text"></textarea>
     <button class="btn-primary" onclick="sendBroadcast()" style="margin-top:10px;"><span>Send to All</span><i class="fas fa-paper-plane"></i></button>
   </div>
 </div>
@@ -437,7 +534,7 @@
     <button class="modal-close" onclick="closeModal('adminDashboard')"><i class="fas fa-times"></i></button>
     <h3><i class="fas fa-chart-pie"></i> Admin Dashboard</h3>
     <div class="dashboard-stats" id="dashboardStats"></div>
-    <h4 style="margin:16px 0 8px; font-size:13px; color:var(--text2); text-transform:uppercase; letter-spacing:1px;">Users</h4>
+    <h4 style="margin:16px 0 8px;font-size:13px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;">All Users</h4>
     <div class="dashboard-users" id="dashboardUsers"></div>
   </div>
 </div>
