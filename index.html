@@ -115,6 +115,7 @@
           <div class="my-info">
             <span id="currentUserName">You</span>
             <small id="myUniqueId" class="unique-id-text"></small>
+            <small id="myStatusText" style="color:var(--accent2);font-size:10px;display:block;">🟢 Available</small>
           </div>
         </div>
         <div class="sidebar-actions">
@@ -188,7 +189,7 @@
       <!-- Chat Header -->
       <div id="chatHeader" class="chat-header" style="display:none;">
         <button id="backToContactsBtn" class="back-btn"><i class="fas fa-arrow-left"></i></button>
-        <div class="chat-partner" onclick="viewProfile()">
+        <div class="chat-partner" id="chatPartnerInfo" onclick="currentChatIsGroup?viewGroupInfo(currentChatUser):viewProfile()">
           <div class="avatar-wrap">
             <img id="chatPartnerAvatar" src=""/>
             <span class="online-badge" id="partnerOnlineBadge" style="display:none;"></span>
