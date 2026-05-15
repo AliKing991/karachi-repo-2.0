@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
+  <!-- MOBILE KEYBOARD FIX: interactive-widget ensures keyboard doesn't break layout -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content"/>
-  <title>AuraChat - Secure Anonymous Messenger</title>
+  <title>AuraChat</title>
   <link rel="stylesheet" href="style.css"/>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
@@ -13,7 +14,7 @@
 </head>
 <body>
 
-<!-- SPLASH SCREEN -->
+<!-- SPLASH -->
 <div id="splashScreen" class="splash">
   <div class="splash-inner">
     <div class="splash-logo">
@@ -26,7 +27,7 @@
   </div>
 </div>
 
-<!-- LOCK SCREEN -->
+<!-- CHAT LOCK SCREEN -->
 <div id="lockScreen" class="lock-screen" style="display:none;">
   <div class="lock-box">
     <div class="lock-icon"><i class="fas fa-lock"></i></div>
@@ -49,7 +50,7 @@
 
 <div class="app-container">
 
-  <!-- LOGIN SCREEN -->
+  <!-- ===== LOGIN ===== -->
   <div class="login-screen" id="loginScreen">
     <div class="login-bg">
       <div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div>
@@ -61,15 +62,18 @@
         <p>Anonymous messaging, redefined</p>
       </div>
 
+      <!-- Role Tabs -->
       <div class="role-tabs">
         <button class="role-tab active" data-role="user" onclick="switchRole('user')"><i class="fas fa-user-secret"></i> User</button>
         <button class="role-tab" data-role="admin" onclick="switchRole('admin')"><i class="fas fa-shield-alt"></i> Admin</button>
       </div>
 
+      <!-- Admin password -->
       <div id="adminFields" style="display:none;">
         <div class="input-group"><i class="fas fa-lock"></i><input type="password" id="adminPassword" placeholder="Admin Password"/></div>
       </div>
 
+      <!-- Profile photo -->
       <div class="profile-upload-area">
         <label for="profilePic" class="avatar-upload">
           <img src="https://api.dicebear.com/7.x/thumbs/svg?seed=default" id="profilePreview"/>
@@ -79,11 +83,13 @@
         <p class="upload-hint">Tap to set photo (optional)</p>
       </div>
 
+      <!-- Private login name (never shown to others) -->
       <div class="input-group">
         <i class="fas fa-user-secret"></i>
         <input type="text" id="displayName" placeholder="Private login name (only you see this)"/>
       </div>
 
+      <!-- Optional display name shown to others -->
       <div class="input-group">
         <i class="fas fa-id-badge"></i>
         <input type="text" id="publicDisplayName" placeholder="Display name (optional, shown to others)"/>
@@ -95,7 +101,7 @@
     </div>
   </div>
 
-  <!-- CHAT INTERFACE -->
+  <!-- ===== CHAT INTERFACE ===== -->
   <div class="chat-interface" id="chatInterface" style="display:none;">
 
     <!-- SIDEBAR -->
@@ -114,6 +120,7 @@
         </div>
         <div class="sidebar-actions">
           <button class="icon-btn" onclick="openCouponSearch()" title="Find by Coupon Code"><i class="fas fa-ticket-alt"></i></button>
+          <button class="icon-btn" onclick="openStoryCreator()" title="Add Story"><i class="fas fa-circle-plus"></i></button>
           <button class="icon-btn" id="toggleDark" title="Theme"><i class="fas fa-moon"></i></button>
           <div class="dropdown-wrap">
             <button class="icon-btn" id="settingsBtn"><i class="fas fa-ellipsis-v"></i></button>
@@ -125,6 +132,7 @@
               <button onclick="openWallpaperPicker()"><i class="fas fa-image"></i> Wallpaper</button>
               <button onclick="openChatLockSetup()"><i class="fas fa-lock"></i> Chat Lock (PIN)</button>
               <button onclick="openNotifSettings()"><i class="fas fa-bell"></i> Notifications</button>
+              <button onclick="openDestructTimer()"><i class="fas fa-clock"></i> Self-Destruct Timer</button>
               <hr/>
               <button onclick="logout()" class="danger-item"><i class="fas fa-sign-out-alt"></i> Logout</button>
             </div>
@@ -132,9 +140,19 @@
         </div>
       </div>
 
+      <!-- Edit Display Name inline -->
       <div id="editNameBox" class="edit-name-box">
-        <input type="text" id="newNameInput" placeholder="New display name"/>
+        <input type="text" id="newNameInput" placeholder="New display name (shown to others)"/>
         <button id="saveNameBtn" class="btn-small">Save</button>
+      </div>
+
+      <!-- Stories Bar -->
+      <div class="stories-bar">
+        <div class="story-add-btn" onclick="openStoryCreator()">
+          <div class="story-ring add-ring"><i class="fas fa-plus"></i></div>
+          <span>Story</span>
+        </div>
+        <div id="storiesList" class="stories-scroll"></div>
       </div>
 
       <div class="search-bar">
@@ -142,6 +160,7 @@
         <input type="text" id="contactSearch" placeholder="Search chats..." oninput="filterContacts(this.value)"/>
       </div>
 
+      <!-- Tabs: Chats | Groups -->
       <div class="sidebar-tabs">
         <button class="stab active" onclick="switchTab('chats',this)">💬 Chats</button>
         <button class="stab" onclick="switchTab('groups',this)">👥 Groups</button>
@@ -153,6 +172,7 @@
       <div class="sidebar-bottom">
         <button class="bottom-nav active" title="Chats"><i class="fas fa-comment-dots"></i></button>
         <button class="bottom-nav" title="Find by Coupon" onclick="openCouponSearch()"><i class="fas fa-ticket-alt"></i></button>
+        <button class="bottom-nav" title="Stories" onclick="openStoriesView()"><i class="fas fa-circle-play"></i></button>
         <button class="bottom-nav admin-only" id="dashboardNavBtn" title="Admin Dashboard" onclick="openAdminDashboard()" style="display:none;"><i class="fas fa-chart-pie"></i></button>
       </div>
     </div>
@@ -166,9 +186,10 @@
         <button class="btn-small" onclick="openCouponSearch()" style="margin-top:12px;"><i class="fas fa-ticket-alt"></i> Use Coupon Code</button>
       </div>
 
+      <!-- Chat Header -->
       <div id="chatHeader" class="chat-header" style="display:none;">
         <button id="backToContactsBtn" class="back-btn"><i class="fas fa-arrow-left"></i></button>
-        <div class="chat-partner" id="chatPartnerInfo">
+        <div class="chat-partner" id="chatPartnerInfo" onclick="currentChatIsGroup?viewGroupInfo(currentChatUser):viewProfile()">
           <div class="avatar-wrap">
             <img id="chatPartnerAvatar" src=""/>
             <span class="online-badge" id="partnerOnlineBadge" style="display:none;"></span>
@@ -180,11 +201,15 @@
         </div>
         <div class="chat-header-actions">
           <button class="icon-btn" onclick="startVoiceCall()" title="Voice Call"><i class="fas fa-phone"></i></button>
+          <button class="icon-btn" onclick="startVideoCall()" title="Video Call"><i class="fas fa-video"></i></button>
+          <button class="icon-btn" onclick="openSearch()" title="Search"><i class="fas fa-search"></i></button>
           <div class="dropdown-wrap">
             <button class="icon-btn"><i class="fas fa-ellipsis-v"></i></button>
             <div class="dropdown-menu">
+              <button onclick="viewProfile()"><i class="fas fa-user"></i> View Profile</button>
               <button onclick="toggleMute()"><i class="fas fa-bell-slash"></i> Mute Chat</button>
               <button onclick="openWallpaperPicker()"><i class="fas fa-image"></i> Wallpaper</button>
+              <button onclick="openDestructTimer()"><i class="fas fa-clock"></i> Self-Destruct</button>
               <button onclick="exportChat()"><i class="fas fa-download"></i> Export Chat</button>
               <hr/>
               <button onclick="blockUser()" class="danger-item"><i class="fas fa-ban"></i> Block User</button>
@@ -194,8 +219,20 @@
         </div>
       </div>
 
+      <!-- Message Search -->
+      <div id="searchBox" class="msg-search-box" style="display:none;">
+        <i class="fas fa-search"></i>
+        <input type="text" id="searchInput" placeholder="Search messages..."/>
+        <button onclick="searchMessage('prev')"><i class="fas fa-chevron-up"></i></button>
+        <button onclick="searchMessage('next')"><i class="fas fa-chevron-down"></i></button>
+        <span id="searchCount"></span>
+        <button onclick="closeSearch()"><i class="fas fa-times"></i></button>
+      </div>
+
+      <!-- Messages -->
       <div id="messages" class="message-area"></div>
 
+      <!-- Reply Preview -->
       <div id="replyPreview" class="reply-preview" style="display:none;">
         <div class="reply-content">
           <span class="reply-label">↩ Replying to</span>
@@ -204,9 +241,25 @@
         <button onclick="cancelReply()"><i class="fas fa-times"></i></button>
       </div>
 
+      <!-- Forward Bar -->
+      <div id="forwardBar" class="forward-bar" style="display:none;">
+        <i class="fas fa-share"></i>
+        <span id="forwardPreview">Forward message...</span>
+        <button onclick="cancelForward()"><i class="fas fa-times"></i></button>
+      </div>
+
+      <!-- Self-destruct indicator -->
+      <div id="destructIndicator" class="destruct-indicator" style="display:none;">
+        <i class="fas fa-clock"></i>
+        <span id="destructLabel">Self-destruct: Off</span>
+        <button onclick="openDestructTimer()">Change</button>
+      </div>
+
+      <!-- Composer -->
       <div class="message-composer" id="composer" style="display:none;">
         <button class="icon-btn emoji-btn" onclick="toggleEmojiPicker()" title="Emoji"><i class="far fa-smile"></i></button>
         <div class="emoji-picker" id="emojiPicker"><div class="emoji-grid" id="emojiGrid"></div></div>
+        <!-- MOBILE KEYBOARD FIX: inputmode, autocomplete off, enterkeyhint -->
         <input type="text" id="messageInput" placeholder="Type a message..."
           inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="sentences"
           enterkeyhint="send"/>
@@ -219,109 +272,70 @@
         <button id="sendMessage" class="send-btn"><i class="fas fa-paper-plane"></i></button>
       </div>
 
+      <!-- Voice recording bar -->
       <div id="voiceRecordingBar" class="voice-recording-bar" style="display:none;">
         <div class="rec-pulse"></div>
         <span>Recording... <span id="recTimer">0s</span></span>
         <button onclick="cancelVoiceRecord()"><i class="fas fa-times"></i></button>
       </div>
 
+      <!-- Admin Controls -->
       <div class="admin-controls" id="adminControls" style="display:none;">
+        <button onclick="adminDeleteUser()"><i class="fas fa-user-slash"></i> Delete User</button>
+        <button onclick="adminUnsend()"><i class="fas fa-ban"></i> Unsend Last</button>
+        <button onclick="adminBroadcast()"><i class="fas fa-bullhorn"></i> Broadcast</button>
+        <button onclick="openCreateGroup()"><i class="fas fa-users"></i> Create Group</button>
         <button onclick="openAdminDashboard()"><i class="fas fa-chart-pie"></i> Dashboard</button>
-        <button onclick="openModeration()"><i class="fas fa-gavel"></i> Moderation</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ADMIN DASHBOARD (Advanced) -->
-<div class="modal-overlay" id="adminDashboard" style="display:none;">
-  <div class="modal-box dashboard-box">
-    <button class="modal-close" onclick="closeModal('adminDashboard')"><i class="fas fa-times"></i></button>
-    <h3><i class="fas fa-chart-pie"></i> Admin Dashboard</h3>
-    
-    <div class="dashboard-tabs">
-      <button class="dash-tab active" onclick="switchDashTab('stats',this)">📊 Statistics</button>
-      <button class="dash-tab" onclick="switchDashTab('monitor',this)">👁️ Monitor</button>
-      <button class="dash-tab" onclick="switchDashTab('moderation',this)">⚖️ Moderation</button>
-      <button class="dash-tab" onclick="switchDashTab('logs',this)">📝 Logs</button>
+<!-- ===== CALL SCREEN ===== -->
+<div id="callScreen" class="call-screen" style="display:none;">
+  <div class="call-bg-blur"></div>
+  <div class="call-content">
+    <div class="call-avatar-wrap">
+      <img id="callAvatar" src=""/>
+      <div class="call-pulse"></div><div class="call-pulse p2"></div>
     </div>
-
-    <!-- Stats Tab -->
-    <div id="stats-tab" class="dash-tab-content">
-      <div class="dashboard-stats" id="dashboardStats"></div>
-      <h4 style="margin:16px 0 8px;font-size:13px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;">All Users</h4>
-      <div class="dashboard-users" id="dashboardUsers"></div>
-    </div>
-
-    <!-- Monitor Tab -->
-    <div id="monitor-tab" class="dash-tab-content" style="display:none;">
-      <div class="monitor-section">
-        <h4>🟢 Active Users Now</h4>
-        <div id="activeUsersList" class="active-users-list"></div>
-      </div>
-      <div class="monitor-section">
-        <h4>💬 Live Chat Activity</h4>
-        <div id="liveActivityFeed" class="activity-feed"></div>
-      </div>
-      <div class="monitor-section">
-        <h4>📊 User Activity</h4>
-        <div id="userActivityList" class="activity-list"></div>
-      </div>
-    </div>
-
-    <!-- Moderation Tab -->
-    <div id="moderation-tab" class="dash-tab-content" style="display:none;">
-      <div class="moderation-controls">
-        <h4>User Controls</h4>
-        <div class="mod-user-search">
-          <input type="text" id="modUserSearch" placeholder="Search user by ID or name..." style="width:100%;padding:10px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);margin-bottom:10px;"/>
-        </div>
-        <div id="modUserResults" class="mod-user-results"></div>
-      </div>
-
-      <div class="moderation-controls" style="margin-top:16px;">
-        <h4>Moderation Actions</h4>
-        <div id="selectedUserMod" style="display:none;padding:12px;background:var(--surface2);border-radius:10px;margin-bottom:12px;">
-          <p>Selected: <strong id="selectedModUser"></strong></p>
-          <div class="mod-action-buttons">
-            <button onclick="modAction('warn')" class="mod-btn warn-btn"><i class="fas fa-exclamation-circle"></i> Warn</button>
-            <button onclick="modAction('mute')" class="mod-btn mute-btn"><i class="fas fa-volume-mute"></i> Mute</button>
-            <button onclick="modAction('suspend')" class="mod-btn suspend-btn"><i class="fas fa-pause-circle"></i> Suspend</button>
-            <button onclick="modAction('ban')" class="mod-btn ban-btn"><i class="fas fa-ban"></i> Ban</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Logs Tab -->
-    <div id="logs-tab" class="dash-tab-content" style="display:none;">
-      <h4>Admin Action Logs</h4>
-      <div id="actionLogs" class="action-logs" style="max-height:400px;overflow-y:auto;"></div>
+    <h2 id="callName"></h2>
+    <p id="callStatus" class="call-status-text">Calling...</p>
+    <div id="callTimer" class="call-timer" style="display:none;">00:00</div>
+    <video id="localVideo" autoplay muted playsinline class="local-video" style="display:none;"></video>
+    <video id="remoteVideo" autoplay playsinline class="remote-video" style="display:none;"></video>
+    <div class="call-controls">
+      <button class="call-btn" id="callMuteBtn" onclick="toggleCallMute()"><i class="fas fa-microphone"></i></button>
+      <button class="call-btn end-btn" onclick="endCall()"><i class="fas fa-phone-slash"></i></button>
+      <button class="call-btn" id="callSpeakerBtn" onclick="toggleSpeaker()"><i class="fas fa-volume-up"></i></button>
     </div>
   </div>
 </div>
 
-<!-- MODERATION MODAL -->
-<div class="modal-overlay" id="moderationModal" style="display:none;">
-  <div class="modal-box small">
-    <button class="modal-close" onclick="closeModal('moderationModal')"><i class="fas fa-times"></i></button>
-    <h3><i class="fas fa-gavel"></i> Moderation</h3>
-    <div class="moderation-options">
-      <button onclick="modAction('warn')" class="mod-btn warn-btn"><i class="fas fa-exclamation-circle"></i> Warn User</button>
-      <button onclick="modAction('mute')" class="mod-btn mute-btn"><i class="fas fa-volume-mute"></i> Mute</button>
-      <button onclick="modAction('suspend')" class="mod-btn suspend-btn"><i class="fas fa-pause-circle"></i> Suspend</button>
-      <button onclick="modAction('ban')" class="mod-btn ban-btn"><i class="fas fa-ban"></i> Ban</button>
-    </div>
+<!-- INCOMING CALL -->
+<div id="incomingCall" class="incoming-call" style="display:none;">
+  <img id="incomingAvatar" src=""/>
+  <div class="incoming-info">
+    <span id="incomingName">Unknown</span>
+    <small id="incomingType">Voice Call</small>
+  </div>
+  <div class="incoming-actions">
+    <button class="accept-btn" onclick="acceptCall()"><i class="fas fa-phone"></i></button>
+    <button class="reject-btn" onclick="rejectCall()"><i class="fas fa-phone-slash"></i></button>
   </div>
 </div>
 
-<!-- COUPON MODAL -->
+<!-- ===== MODALS ===== -->
+
+<!-- Coupon Code Modal -->
 <div class="modal-overlay" id="couponModal" style="display:none;">
   <div class="modal-box small">
     <button class="modal-close" onclick="closeModal('couponModal')"><i class="fas fa-times"></i></button>
     <h3><i class="fas fa-ticket-alt"></i> Connect via Coupon Code</h3>
+    <p style="color:var(--text2);font-size:13px;margin-bottom:14px;">Enter someone's coupon code to start chatting anonymously</p>
     <div class="input-group" style="margin:0;">
       <i class="fas fa-hashtag"></i>
+      <!-- MOBILE KEYBOARD FIX for modal input -->
       <input type="text" id="couponInput" placeholder="e.g. AURA-X7K2-P9Q1"
         inputmode="text" autocomplete="off" autocapitalize="characters"
         style="text-transform:uppercase; letter-spacing:2px; font-family:var(--font-head); font-size:16px;"/>
@@ -330,25 +344,26 @@
   </div>
 </div>
 
-<!-- MY COUPON MODAL -->
+<!-- My Coupon Code Modal -->
 <div class="modal-overlay" id="myCouponModal" style="display:none;">
   <div class="modal-box small" style="text-align:center;">
     <button class="modal-close" onclick="closeModal('myCouponModal')"><i class="fas fa-times"></i></button>
     <h3><i class="fas fa-ticket-alt"></i> Your Coupon Code</h3>
     <p style="color:var(--text2);font-size:13px;margin-bottom:16px;">Share this code with anyone to let them chat with you</p>
     <div class="coupon-display" id="myCouponDisplay"></div>
+    <p style="color:var(--text3);font-size:11px;margin-top:8px;">Your real name is never revealed</p>
     <button class="btn-primary" onclick="copyCoupon()" style="margin-top:12px;"><i class="fas fa-copy"></i><span>Copy Code</span></button>
   </div>
 </div>
 
-<!-- PROFILE MODAL -->
+<!-- Profile Modal -->
 <div class="modal-overlay" id="profileModal" style="display:none;">
   <div class="modal-box">
     <button class="modal-close" onclick="closeModal('profileModal')"><i class="fas fa-times"></i></button>
     <div class="profile-modal-content">
       <div class="profile-big-avatar"><img id="modalAvatar" src=""/></div>
       <h2 id="modalName"></h2>
-      <p id="modalUniqueId" class="unique-id-text"></p>
+      <p id="modalUniqueId" class="unique-id-text" style="margin:4px 0;font-size:13px;"></p>
       <p id="modalRole" class="modal-role"></p>
       <p id="modalStatusTxt" class="modal-status"></p>
       <p id="modalJoined" class="modal-joined"></p>
@@ -360,28 +375,172 @@
   </div>
 </div>
 
-<!-- WALLPAPER MODAL -->
+<!-- Status Modal -->
+<div class="modal-overlay" id="statusModal" style="display:none;">
+  <div class="modal-box small">
+    <button class="modal-close" onclick="closeModal('statusModal')"><i class="fas fa-times"></i></button>
+    <h3>Set Your Status</h3>
+    <div class="status-options">
+      <button onclick="saveStatus('🟢 Available')">🟢 Available</button>
+      <button onclick="saveStatus('🌙 Away')">🌙 Away</button>
+      <button onclick="saveStatus('🔴 Busy')">🔴 Busy</button>
+      <button onclick="saveStatus('📵 Do Not Disturb')">📵 Do Not Disturb</button>
+      <button onclick="saveStatus('👻 Invisible')">👻 Invisible</button>
+    </div>
+    <input type="text" id="customStatus" placeholder="Custom status..."
+      inputmode="text" style="margin-top:10px;width:100%;padding:10px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);outline:none;"/>
+    <button class="btn-small" style="margin-top:8px;" onclick="saveCustomStatus()">Set Custom</button>
+  </div>
+</div>
+
+<!-- Create Group Modal (Admin only) -->
+<div class="modal-overlay" id="createGroupModal" style="display:none;">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('createGroupModal')"><i class="fas fa-times"></i></button>
+    <h3><i class="fas fa-users"></i> Create Group</h3>
+    <div class="input-group">
+      <i class="fas fa-users"></i>
+      <input type="text" id="groupNameInput" placeholder="Group name" inputmode="text"/>
+    </div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:8px;">Select members to add:</p>
+    <div id="groupMemberPicker" class="group-member-picker"></div>
+    <p style="font-size:11px;color:var(--text3);margin-top:8px;">Members will only see each other inside the group, not in main contacts.</p>
+    <button class="btn-primary" onclick="createGroup()" style="margin-top:14px;"><span>Create Group</span><i class="fas fa-check"></i></button>
+  </div>
+</div>
+
+<!-- Group Info Modal -->
+<div class="modal-overlay" id="groupInfoModal" style="display:none;">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('groupInfoModal')"><i class="fas fa-times"></i></button>
+    <h3 id="groupInfoTitle"><i class="fas fa-users"></i> Group Info</h3>
+    <div class="profile-modal-content">
+      <div class="profile-big-avatar" style="background:var(--surface2);border-radius:50%;width:80px;height:80px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:32px;">👥</div>
+      <h2 id="groupInfoName"></h2>
+      <p id="groupInfoCount" class="modal-status"></p>
+    </div>
+    <h4 style="margin:12px 0 8px;font-size:13px;color:var(--text2);">Members</h4>
+    <div id="groupMemberList" class="group-member-list"></div>
+    <div id="groupAdminActions" style="display:none;margin-top:12px;">
+      <button class="btn-small" onclick="addMemberToGroup()" style="margin-right:8px;"><i class="fas fa-user-plus"></i> Add Member</button>
+      <button class="btn-small" onclick="deleteGroup()" style="background:#ff5c5c;"><i class="fas fa-trash"></i> Delete Group</button>
+    </div>
+  </div>
+</div>
+
+<!-- Wallpaper Modal -->
 <div class="modal-overlay" id="wallpaperModal" style="display:none;">
   <div class="modal-box">
     <button class="modal-close" onclick="closeModal('wallpaperModal')"><i class="fas fa-times"></i></button>
     <h3><i class="fas fa-image"></i> Chat Wallpaper</h3>
     <div class="wallpaper-grid" id="wallpaperGrid"></div>
-    <button class="btn-small" onclick="clearWallpaper()" style="margin-top:12px;background:#444;">🗑 Remove</button>
+    <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
+      <label class="btn-small" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+        <i class="fas fa-upload"></i> Custom
+        <input type="file" id="customWallpaper" accept="image/*" hidden onchange="setCustomWallpaper(this)"/>
+      </label>
+      <button class="btn-small" onclick="clearWallpaper()" style="background:#444;">🗑 Remove</button>
+    </div>
   </div>
 </div>
 
-<!-- CHAT LOCK MODAL -->
+<!-- Chat Lock Modal -->
 <div class="modal-overlay" id="chatLockModal" style="display:none;">
   <div class="modal-box small">
     <button class="modal-close" onclick="closeModal('chatLockModal')"><i class="fas fa-times"></i></button>
     <h3><i class="fas fa-lock"></i> Chat Lock PIN</h3>
+    <!-- MOBILE FIX: inputmode=numeric for PIN -->
     <input type="password" id="newPinInput" maxlength="4" placeholder="New 4-digit PIN" class="lock-input" inputmode="numeric"/>
     <input type="password" id="confirmPinInput" maxlength="4" placeholder="Confirm PIN" class="lock-input" style="margin-top:8px;" inputmode="numeric"/>
     <button class="btn-primary" style="margin-top:12px;" onclick="saveChatLock()"><span>Set PIN</span></button>
+    <button onclick="removeChatLock()" style="margin-top:8px;width:100%;background:transparent;border:1px solid #ff5c5c;color:#ff5c5c;padding:8px;border-radius:8px;cursor:pointer;font-family:var(--font-body);">Remove Lock</button>
   </div>
 </div>
 
-<!-- NOTIFICATIONS MODAL -->
+<!-- Self-Destruct Modal -->
+<div class="modal-overlay" id="destructModal" style="display:none;">
+  <div class="modal-box small">
+    <button class="modal-close" onclick="closeModal('destructModal')"><i class="fas fa-times"></i></button>
+    <h3>⏱️ Self-Destruct Timer</h3>
+    <p style="color:var(--text2);font-size:13px;margin-bottom:12px;">Messages auto-delete after sending</p>
+    <div class="destruct-options">
+      <button onclick="setDestructTime(10)">10 sec</button>
+      <button onclick="setDestructTime(30)">30 sec</button>
+      <button onclick="setDestructTime(60)">1 min</button>
+      <button onclick="setDestructTime(300)">5 min</button>
+      <button onclick="setDestructTime(3600)">1 hour</button>
+      <button onclick="setDestructTime(0)" style="border-color:#ff5c5c;color:#ff5c5c;">Off</button>
+    </div>
+    <p id="destructStatus" style="font-size:12px;color:var(--primary);margin-top:10px;text-align:center;"></p>
+  </div>
+</div>
+
+<!-- Edit Message Modal -->
+<div class="modal-overlay" id="editMsgModal" style="display:none;">
+  <div class="modal-box small">
+    <button class="modal-close" onclick="closeModal('editMsgModal')"><i class="fas fa-times"></i></button>
+    <h3><i class="fas fa-pen"></i> Edit Message</h3>
+    <input type="text" id="editMsgInput" class="edit-msg-input" inputmode="text" autocomplete="off"/>
+    <button class="btn-primary" style="margin-top:10px;" onclick="saveEditedMsg()"><span>Save Changes</span></button>
+  </div>
+</div>
+
+<!-- Story Creator -->
+<div class="modal-overlay" id="storyModal" style="display:none;">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('storyModal')"><i class="fas fa-times"></i></button>
+    <h3><i class="fas fa-circle-plus"></i> Add Story</h3>
+    <div class="story-creator">
+      <textarea id="storyText" placeholder="What's on your mind?..." rows="3" inputmode="text"></textarea>
+      <div class="story-bg-picker">
+        <p style="font-size:12px;color:var(--text2);margin-bottom:6px;">Background</p>
+        <div id="storyBgOptions" class="story-bg-grid"></div>
+      </div>
+      <label class="btn-small" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;margin-top:8px;">
+        <i class="fas fa-image"></i> Add Photo
+        <input type="file" id="storyImageInput" accept="image/*" hidden onchange="previewStoryImage(this)"/>
+      </label>
+      <img id="storyImagePreview" src="" style="display:none;max-width:100%;border-radius:10px;margin-top:8px;max-height:150px;object-fit:cover;"/>
+      <button class="btn-primary" style="margin-top:14px;" onclick="postStory()"><span>Post Story</span><i class="fas fa-paper-plane"></i></button>
+    </div>
+  </div>
+</div>
+
+<!-- Stories Viewer -->
+<div id="storiesViewer" class="stories-viewer" style="display:none;">
+  <div class="sv-progress-bar" id="svProgressBar"></div>
+  <button class="sv-close" onclick="closeStoriesViewer()"><i class="fas fa-times"></i></button>
+  <div class="sv-user-info">
+    <img id="svAvatar" src=""/>
+    <div><span id="svName"></span><br/><small id="svTime"></small></div>
+  </div>
+  <div class="sv-content" id="svContent"></div>
+  <button class="sv-nav sv-prev" onclick="storyNav(-1)"><i class="fas fa-chevron-left"></i></button>
+  <button class="sv-nav sv-next" onclick="storyNav(1)"><i class="fas fa-chevron-right"></i></button>
+</div>
+
+<!-- Broadcast Modal -->
+<div class="modal-overlay" id="broadcastModal" style="display:none;">
+  <div class="modal-box small">
+    <button class="modal-close" onclick="closeModal('broadcastModal')"><i class="fas fa-times"></i></button>
+    <h3><i class="fas fa-bullhorn"></i> Admin Broadcast</h3>
+    <textarea id="broadcastText" placeholder="Message to all users..." rows="4" inputmode="text"></textarea>
+    <button class="btn-primary" onclick="sendBroadcast()" style="margin-top:10px;"><span>Send to All</span><i class="fas fa-paper-plane"></i></button>
+  </div>
+</div>
+
+<!-- Admin Dashboard -->
+<div class="modal-overlay" id="adminDashboard" style="display:none;">
+  <div class="modal-box dashboard-box">
+    <button class="modal-close" onclick="closeModal('adminDashboard')"><i class="fas fa-times"></i></button>
+    <h3><i class="fas fa-chart-pie"></i> Admin Dashboard</h3>
+    <div class="dashboard-stats" id="dashboardStats"></div>
+    <h4 style="margin:16px 0 8px;font-size:13px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;">All Users</h4>
+    <div class="dashboard-users" id="dashboardUsers"></div>
+  </div>
+</div>
+
+<!-- Notification Settings -->
 <div class="modal-overlay" id="notifModal" style="display:none;">
   <div class="modal-box small">
     <button class="modal-close" onclick="closeModal('notifModal')"><i class="fas fa-times"></i></button>
@@ -395,27 +554,20 @@
         <span>Sound</span>
         <div class="toggle-wrap"><input type="checkbox" id="notifSound" onchange="saveNotifPref()" checked/><span class="toggle-slider"></span></div>
       </label>
+      <label class="toggle-row">
+        <span>Story Alerts</span>
+        <div class="toggle-wrap"><input type="checkbox" id="notifStories" onchange="saveNotifPref()" checked/><span class="toggle-slider"></span></div>
+      </label>
     </div>
+    <button class="btn-primary" style="margin-top:14px;" onclick="requestPushPermission()">
+      <i class="fas fa-bell"></i><span>Enable Push Notifications</span>
+    </button>
   </div>
 </div>
 
-<!-- STATUS MODAL -->
-<div class="modal-overlay" id="statusModal" style="display:none;">
-  <div class="modal-box small">
-    <button class="modal-close" onclick="closeModal('statusModal')"><i class="fas fa-times"></i></button>
-    <h3>Set Your Status</h3>
-    <div class="status-options">
-      <button onclick="saveStatus('🟢 Available')">🟢 Available</button>
-      <button onclick="saveStatus('🌙 Away')">🌙 Away</button>
-      <button onclick="saveStatus('🔴 Busy')">🔴 Busy</button>
-      <button onclick="saveStatus('👻 Invisible')">👻 Invisible</button>
-    </div>
-  </div>
-</div>
-
-<!-- TOAST -->
+<!-- Toast -->
 <div id="toast" class="toast"></div>
 
-<script src="script-fixed.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
